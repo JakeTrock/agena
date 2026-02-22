@@ -96,6 +96,7 @@ type RunnerOptions struct {
 	Limit         int
 	TimeLimit     time.Duration
 	DryRun        bool
+	NoClean       bool
 	Verbose       bool
 	Partition     HashPartition
 	Timeout       time.Duration // Per-candidate timeout (overrides task.yaml)
@@ -646,6 +647,10 @@ func (r *Runner) runVerify() bool {
 }
 
 func (r *Runner) runReset() bool {
+	if r.opts.NoClean {
+		return true
+	}
+
 	if r.env.Config.ResetCommand == "" {
 		return true
 	}
@@ -658,6 +663,11 @@ func (r *Runner) runReset() bool {
 }
 
 func (r *Runner) runResetAndVerify() bool {
+	if r.opts.NoClean {
+		fmt.Println(ColorWarning("Skipping workspace cleanup (--no-clean)"))
+		return true
+	}
+
 	fmt.Print(ColorInfo("Resetting changes and verifying build..."))
 
 	// Reset
@@ -683,6 +693,11 @@ func (r *Runner) runResetAndVerify() bool {
 }
 
 func (r *Runner) runStartupReset() error {
+	if r.opts.NoClean {
+		fmt.Println(ColorWarning("Skipping startup cleanup (--no-clean)"))
+		return nil
+	}
+
 	fmt.Println(ColorInfo("Resetting environment to clean state..."))
 
 	if r.env.Config.ResetCommand == "" {

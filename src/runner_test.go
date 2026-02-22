@@ -566,3 +566,60 @@ func TestMockCommandExecutor(t *testing.T) {
 		}
 	})
 }
+
+func TestRunStartupReset_NoCleanSkipsAllChecks(t *testing.T) {
+	runner := &Runner{
+		env: &Environment{
+			ProjectDir: t.TempDir(),
+			Config: Config{
+				ResetCommand:  "git reset --hard",
+				VerifyCommand: "go test ./...",
+			},
+		},
+		opts: RunnerOptions{
+			NoClean: true,
+		},
+	}
+
+	mock := NewMockCommandExecutor()
+	// If startup reset performs any command, this would fail the test.
+	mock.SetResult("git reset --hard", false, fmt.Errorf("should not be called"))
+	mock.SetResult("go test ./...", false, fmt.Errorf("should not be called"))
+	runner.setExecutor(mock)
+
+	if err := runner.runStartupReset(); err != nil {
+		t.Fatalf("runStartupReset() with --no-clean should succeed, got: %v", err)
+	}
+
+	if len(mock.Calls) != 0 {
+		t.Fatalf("expected no executor calls, got %d: %+v", len(mock.Calls), mock.Calls)
+	}
+}
+
+func TestRunResetAndVerify_NoCleanSkipsCleanup(t *testing.T) {
+	runner := &Runner{
+		env: &Environment{
+			ProjectDir: t.TempDir(),
+			Config: Config{
+				ResetCommand:  "git reset --hard",
+				VerifyCommand: "go test ./...",
+			},
+		},
+		opts: RunnerOptions{
+			NoClean: true,
+		},
+	}
+
+	mock := NewMockCommandExecutor()
+	mock.SetResult("git reset --hard", false, fmt.Errorf("should not be called"))
+	mock.SetResult("go test ./...", false, fmt.Errorf("should not be called"))
+	runner.setExecutor(mock)
+
+	if ok := runner.runResetAndVerify(); !ok {
+		t.Fatalf("runResetAndVerify() with --no-clean should return true")
+	}
+
+	if len(mock.Calls) != 0 {
+		t.Fatalf("expected no executor calls, got %d: %+v", len(mock.Calls), mock.Calls)
+	}
+}

@@ -18,6 +18,7 @@ func main() {
 	taskTimeoutFlag := flag.Duration("task-timeout", 0*time.Second, "Per-candidate timeout (e.g. 5m, 30s) (overrides task.yaml)")
 	geminiCommandFlag := flag.String("gemini-command", "", "Gemini command to use (overrides task.yaml)")
 	dryRunFlag := flag.Bool("dry-run", false, "Print prompt without executing Gemini")
+	noCleanFlag := flag.Bool("no-clean", false, "Skip startup/failure cleanup and keep workspace changes")
 	verboseFlag := flag.Bool("verbose", false, "Print verbose output")
 	shardFlag := flag.String("shard", "", "Shard index/total (e.g. 1/4 for first of 4 workers)")
 	initFlag := flag.Bool("init", false, "Create a starter agena/ directory in the current project")
@@ -109,6 +110,7 @@ func main() {
 		Limit:         *limitFlag,
 		TimeLimit:     *timeLimitFlag,
 		DryRun:        *dryRunFlag,
+		NoClean:       *noCleanFlag,
 		Verbose:       *verboseFlag,
 		Partition:     partition,
 		Timeout:       *taskTimeoutFlag,

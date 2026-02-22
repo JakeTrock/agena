@@ -103,6 +103,9 @@ agena mytask --shard 4/4  # Terminal 4
 # Override task settings temporarily
 agena mytask --task-timeout 5m      # Per-candidate timeout
 agena mytask --gemini-command "gemini"
+
+# Keep workspace changes even when a run fails
+agena mytask --no-clean
 ```
 
 If `agena/` is missing, Agena now auto-creates a starter setup in the current directory.
@@ -116,6 +119,7 @@ If `agena/` is missing, Agena now auto-creates a starter setup in the current di
 | `--gemini-command`  | Gemini command to use (overrides task.yaml)         |
 | `--init`            | Create starter `agena/` config and example task     |
 | `--dry-run`         | Print prompts without executing Gemini              |
+| `--no-clean`        | Skip startup/failure cleanup and keep workspace changes |
 | `--verbose`         | Print full prompt content and show command overrides |
 | `--shard I/N`       | Shard index/total for parallel processing           |
 
