@@ -1,0 +1,25 @@
+agenatest/agena/example-task/task.yaml
+  327fe9714c157017 1-16
+src/init.go
+  327fe9714c157017 17,19-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "ab80e1fec973b7df2c8c9c1fdf2a00250f03c4aa",
+  "prompts": {
+    "327fe9714c157017": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7bbc653f-9a90-472d-a2d1-3848796e654b",
+        "model": "gpt-5.3-codex"
+      },
+      "human_author": "Jacob Trock <jgh@geocrypt.me>",
+      "messages": [],
+      "total_additions": 107,
+      "total_deletions": 1,
+      "accepted_lines": 107,
+      "overriden_lines": 0
+    }
+  }
+}
