@@ -1,0 +1,23 @@
+src/executor.go
+  9918a6d131ebe872 83-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "3c5fe76e60d7cbf452f0c6277a6b9253504fcde9",
+  "prompts": {
+    "9918a6d131ebe872": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8953a318-e80c-42bb-add2-86700d1d4461",
+        "model": "claude-opus-4-5-20251101"
+      },
+      "human_author": "Jacob Trock <jgh@geocrypt.me>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 1,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
