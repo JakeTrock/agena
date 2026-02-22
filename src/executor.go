@@ -398,9 +398,16 @@ func CheckGeminiCommand(geminiCmd string) error {
 		return fmt.Errorf("empty gemini command")
 	}
 
-	_, err := exec.LookPath(parts[0])
+	cmdName := parts[0]
+	_, err := exec.LookPath(cmdName)
 	if err != nil {
-		return fmt.Errorf("gemini command not found: %s", parts[0])
+		return fmt.Errorf("%s\n\n%s '%s' %s\n\n%s\n  %s\n\n%s\n  %s",
+			ColorError("Gemini CLI not found"),
+			"The command", cmdName, "could not be found in your PATH.",
+			"To install Gemini CLI:",
+			ColorInfo("npm install -g @anthropic-ai/gemini-cli"),
+			"Or specify a different command in your config.yaml:",
+			ColorDim("gemini_command: /path/to/gemini"))
 	}
 	return nil
 }

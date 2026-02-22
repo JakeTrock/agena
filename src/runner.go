@@ -425,6 +425,10 @@ func (r *Runner) runIteration() (done bool, err error) {
 	if err != nil {
 		// Gemini errored out - clean up any partial changes before retry
 		fmt.Println(ColorWarning("Gemini failed, cleaning up..."))
+		// Show stderr output if available (helps diagnose API key issues, etc.)
+		if geminiOutput != "" {
+			fmt.Printf("%s\n%s\n", ColorDim("Gemini output:"), ColorDim(strings.TrimSpace(geminiOutput)))
+		}
 		if !r.runResetAndVerify() {
 			return false, &fatalError{msg: "failed to reset after gemini error"}
 		}
