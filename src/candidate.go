@@ -1,0 +1,422 @@
+package main
+
+import (
+	"bufio"
+	"bytes"
+	"crypto/md5"
+	"encoding/binary"
+	"encoding/json"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+)
+
+// Candidate represents a work item from the candidate source output.
+// It can be a string, array, or map - stored as raw JSON for flexible access.
+type Candidate struct {
+	Key  string          // JSON serialization of the full candidate (for uniqueness)
+	Data json.RawMessage // Raw JSON data (string, array, or map)
+}
+
+// HashPartition specifies which partition of candidates a worker should process
+type HashPartition struct {
+	WorkerCount int // Total number of parallel workers (N)
+	WorkerIndex int // This worker's index (0 to N-1)
+}
+
+// NoFilter returns a HashPartition that processes all candidates
+func NoFilter() HashPartition {
+	return HashPartition{WorkerCount: 1, WorkerIndex: 0}
+}
+
+// ParseCandidates parses the output from a candidate source.
+// Supports JSON arrays like ["a", "b"], [["a", "x"], ["b", "y"]], or [{"file": "a"}, {"file": "b"}]
+// If JSON parsing fails, treats input as newline-separated plain text (one candidate per non-empty line).
+func ParseCandidates(data []byte) ([]Candidate, error) {
+	// First try JSON parsing
+	var raw []json.RawMessage
+	if err := json.Unmarshal(data, &raw); err == nil {
+		return parseJsonCandidates(raw)
+	}
+
+	// JSON failed - treat as newline-separated plain text
+	lines := strings.Split(string(data), "\n")
+	candidates := make([]Candidate, 0, len(lines))
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			// Wrap as JSON string for Data field compatibility
+			jsonStr := `"` + jsonEscape(line) + `"`
+			candidates = append(candidates, Candidate{
+				Key:  line,
+				Data: json.RawMessage(jsonStr),
+			})
+		}
+	}
+	return candidates, nil
+}
+
+// parseJsonCandidates parses a JSON array of candidates.
+func parseJsonCandidates(raw []json.RawMessage) ([]Candidate, error) {
+	candidates := make([]Candidate, 0, len(raw))
+	for _, item := range raw {
+		// For simple strings, use the unquoted value as the key
+		var str string
+		if err := json.Unmarshal(item, &str); err == nil {
+			candidates = append(candidates, Candidate{
+				Key:  str,
+				Data: item,
+			})
+			continue
+		}
+
+		// For objects, normalize by sorting keys for deterministic key generation
+		if len(item) > 0 && item[0] == '{' {
+			var m map[string]json.RawMessage
+			if err := json.Unmarshal(item, &m); err == nil {
+				key := normalizeMapKey(m)
+				candidates = append(candidates, Candidate{
+					Key:  key,
+					Data: item,
+				})
+				continue
+			}
+		}
+
+		// For arrays or anything else, use compacted JSON as key
+		var buf bytes.Buffer
+		if err := json.Compact(&buf, item); err != nil {
+			return nil, fmt.Errorf("failed to compact JSON: %w", err)
+		}
+
+		candidates = append(candidates, Candidate{
+			Key:  buf.String(),
+			Data: item,
+		})
+	}
+
+	return candidates, nil
+}
+
+// jsonEscape escapes special characters in a string for JSON encoding.
+func jsonEscape(s string) string {
+	// Use encoding/json to properly escape the string
+	buf, _ := json.Marshal(s)
+	return string(buf[1 : len(buf)-1]) // Remove surrounding quotes
+}
+
+// normalizeMapKey creates a deterministic key for map candidates by sorting keys.
+func normalizeMapKey(m map[string]json.RawMessage) string {
+	// Get sorted keys
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	// Simple string sort is sufficient for our use case
+	for i := 0; i < len(keys); i++ {
+		for j := i + 1; j < len(keys); j++ {
+			if keys[i] > keys[j] {
+				keys[i], keys[j] = keys[j], keys[i]
+			}
+		}
+	}
+
+	// Build JSON with sorted keys
+	var buf bytes.Buffer
+	buf.WriteByte('{')
+	for i, k := range keys {
+		if i > 0 {
+			buf.WriteByte(',')
+		}
+		// Write key (quoted)
+		buf.WriteByte('"')
+		buf.WriteString(k)
+		buf.WriteByte('"')
+		buf.WriteByte(':')
+		// Write value (compact it)
+		if err := json.Compact(&buf, m[k]); err != nil {
+			// Fallback: just write the raw value
+			buf.Write(m[k])
+		}
+	}
+	buf.WriteByte('}')
+	return buf.String()
+}
+
+// IsArray returns true if the candidate data is a JSON array.
+func (c *Candidate) IsArray() bool {
+	return len(c.Data) > 0 && c.Data[0] == '['
+}
+
+// IsMap returns true if the candidate data is a JSON object.
+func (c *Candidate) IsMap() bool {
+	return len(c.Data) > 0 && c.Data[0] == '{'
+}
+
+// IsString returns true if the candidate data is a JSON string.
+func (c *Candidate) IsString() bool {
+	return len(c.Data) > 0 && c.Data[0] == '"'
+}
+
+// GetIndex returns the element at the given index (0-based) for array candidates.
+// Returns the value as a string (JSON-serialized if not a string type).
+func (c *Candidate) GetIndex(i int) (string, bool) {
+	if !c.IsArray() {
+		return "", false
+	}
+
+	var arr []json.RawMessage
+	if err := json.Unmarshal(c.Data, &arr); err != nil {
+		return "", false
+	}
+
+	if i < 0 || i >= len(arr) {
+		return "", false
+	}
+
+	return rawToString(arr[i]), true
+}
+
+// GetSlice returns elements from the given index to the end as a JSON array.
+func (c *Candidate) GetSlice(start int) (string, bool) {
+	if !c.IsArray() {
+		return "", false
+	}
+
+	var arr []json.RawMessage
+	if err := json.Unmarshal(c.Data, &arr); err != nil {
+		return "", false
+	}
+
+	if start < 0 || start >= len(arr) {
+		return "[]", true
+	}
+
+	slice := arr[start:]
+	result, err := json.Marshal(slice)
+	if err != nil {
+		return "", false
+	}
+
+	return string(result), true
+}
+
+// GetKey returns the value for the given key in a map candidate.
+// Returns the value as a string (JSON-serialized if not a string type).
+func (c *Candidate) GetKey(key string) (string, bool) {
+	if !c.IsMap() {
+		return "", false
+	}
+
+	var m map[string]json.RawMessage
+	if err := json.Unmarshal(c.Data, &m); err != nil {
+		return "", false
+	}
+
+	val, ok := m[key]
+	if !ok {
+		return "", false
+	}
+
+	return rawToString(val), true
+}
+
+// String returns the candidate data as a string.
+// Single-item arrays are unwrapped for convenience.
+func (c *Candidate) String() string {
+	// For strings, return the unquoted value
+	if c.IsString() {
+		var str string
+		if err := json.Unmarshal(c.Data, &str); err == nil {
+			return str
+		}
+	}
+
+	// For single-item arrays, unwrap and return the item
+	if c.IsArray() {
+		var arr []json.RawMessage
+		if err := json.Unmarshal(c.Data, &arr); err == nil && len(arr) == 1 {
+			return rawToString(arr[0])
+		}
+	}
+
+	// Otherwise return the full JSON
+	return string(c.Data)
+}
+
+// rawToString converts a json.RawMessage to a string.
+// If it's a JSON string, returns the unquoted value.
+// Otherwise returns the JSON representation.
+func rawToString(raw json.RawMessage) string {
+	var str string
+	if err := json.Unmarshal(raw, &str); err == nil {
+		return str
+	}
+	return string(raw)
+}
+
+// FilterByPartition filters candidates by MD5 hash modulo.
+func FilterByPartition(candidates []Candidate, partition HashPartition) []Candidate {
+	if partition.WorkerCount <= 1 {
+		return candidates
+	}
+
+	filtered := make([]Candidate, 0, len(candidates)/partition.WorkerCount)
+	for _, c := range candidates {
+		hash := md5.Sum([]byte(c.Key))
+		hashUint64 := binary.LittleEndian.Uint64(hash[:8])
+
+		if int(hashUint64%uint64(partition.WorkerCount)) == partition.WorkerIndex {
+			filtered = append(filtered, c)
+		}
+	}
+
+	return filtered
+}
+
+// IgnoredList manages the list of already-processed candidates.
+type IgnoredList struct {
+	path      string
+	entries   map[string]bool // For file-based ignore list
+	attempts  map[string]int  // Track attempts per candidate key
+	maxRepeat int             // When > 0, track attempts instead of permanent ignore
+}
+
+func NewIgnoredList(taskDir string) (*IgnoredList, error) {
+	path := filepath.Join(taskDir, "ignored.log")
+	entries := make(map[string]bool)
+	attempts := make(map[string]int)
+
+	file, err := os.Open(path)
+	if err == nil {
+		defer file.Close()
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := strings.TrimSpace(scanner.Text())
+			if line != "" {
+				entries[line] = true
+				attempts[line] = 1 // Existing entries count as 1 attempt
+			}
+		}
+		if err := scanner.Err(); err != nil {
+			return nil, fmt.Errorf("failed to read ignored list: %w", err)
+		}
+	} else if !os.IsNotExist(err) {
+		return nil, fmt.Errorf("failed to open ignored list: %w", err)
+	}
+
+	return &IgnoredList{
+		path:     path,
+		entries:  entries,
+		attempts: attempts,
+	}, nil
+}
+
+// NewIgnoredListFromCommand creates an IgnoredList by running a command.
+// Command should output one ignored key per line.
+func NewIgnoredListFromCommand(command, workDir string) (*IgnoredList, error) {
+	cmd := exec.Command("sh", "-c", command)
+	cmd.Dir = workDir
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("ignore list command failed: %w", err)
+	}
+
+	entries := make(map[string]bool)
+	attempts := make(map[string]int)
+	for _, line := range strings.Split(string(output), "\n") {
+		key := strings.TrimSpace(line)
+		if key != "" {
+			entries[key] = true
+			attempts[key] = 1 // Existing entries count as 1 attempt
+		}
+	}
+
+	return &IgnoredList{
+		path:     "", // No file path for command-based lists
+		entries:  entries,
+		attempts: attempts,
+	}, nil
+}
+
+func (l *IgnoredList) Contains(key string) bool {
+	if l.maxRepeat > 0 {
+		return l.attempts[key] >= l.maxRepeat
+	}
+	return l.entries[key]
+}
+
+// SetMaxRepeat sets the max repeat count and adjusts existing entries.
+// When repeat mode is enabled, existing entries (from file) are marked as done
+// so they won't be retried. Only new candidates will get up to N attempts.
+func (l *IgnoredList) SetMaxRepeat(n int) {
+	l.maxRepeat = n
+	if n > 0 {
+		for key := range l.entries {
+			if l.attempts[key] == 1 {
+				// Existing entry from file - mark as already done
+				l.attempts[key] = n
+			}
+		}
+	}
+}
+
+func (l *IgnoredList) Add(key string) error {
+	// Increment attempt count
+	l.attempts[key]++
+
+	// In repeat mode, only write to file when limit is reached
+	if l.maxRepeat > 0 {
+		if l.attempts[key] >= l.maxRepeat {
+			// Hit the repeat limit - persist to file
+			return l.persistKey(key)
+		}
+		return nil
+	}
+
+	// Non-repeat mode - persist immediately
+	return l.persistKey(key)
+}
+
+// persistKey writes a key to the ignored log file and marks it in entries.
+// Command-based lists (no path) are only tracked in memory.
+func (l *IgnoredList) persistKey(key string) error {
+	if l.entries[key] {
+		return nil
+	}
+
+	// Command-based lists have no file path - just mark in memory
+	if l.path == "" {
+		l.entries[key] = true
+		return nil
+	}
+
+	file, err := os.OpenFile(l.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to open ignored list for writing: %w", err)
+	}
+	defer file.Close()
+
+	if _, err := fmt.Fprintln(file, key); err != nil {
+		return fmt.Errorf("failed to write to ignored list: %w", err)
+	}
+
+	l.entries[key] = true
+	return nil
+}
+
+// SelectCandidate returns the first candidate not in the ignored list.
+// If ignored is nil, returns the first candidate (no filtering).
+func SelectCandidate(candidates []Candidate, ignored *IgnoredList) *Candidate {
+	if ignored == nil && len(candidates) > 0 {
+		return &candidates[0]
+	}
+	for _, c := range candidates {
+		if ignored == nil || !ignored.Contains(c.Key) {
+			return &c
+		}
+	}
+	return nil
+}

@@ -1,0 +1,84 @@
+#!/bin/bash
+# Mock Gemini for testing agena
+
+set -e
+
+DELAY="${MOCK_GEMINI_DELAY:-3}"
+STREAMING=0
+PROMPT=""
+
+# Parse flags
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --prompt|-p)
+            if [[ -z "$2" ]] || [[ "$2" == -* ]] || [[ "$2" == "<"* ]]; then
+                PROMPT=$(cat)
+                shift
+            else
+                PROMPT="$2"
+                shift 2
+            fi
+            ;;
+        --output-format|-o)
+            if [[ "$2" == "stream-json" ]]; then
+                STREAMING=1
+            fi
+            shift 2
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
+# Extract candidate from prompt
+CANDIDATE=$(echo "$PROMPT" | grep -oP 'Fix the issue: \K\S+' || echo "unknown")
+
+# Response text
+MSG1="[mock-gemini] Analyzing '$CANDIDATE'..."
+MSG2="I'll examine the code to identify the issue."
+MSG3="Tuning: MOCK_GEMINI_DELAY=${DELAY}s  MOCK_GEMINI_FIX=${MOCK_GEMINI_FIX:-0}"
+
+if [[ "$MOCK_GEMINI_FIX" == "1" ]]; then
+    touch ".fixed-${CANDIDATE}"
+    MSG4="Result: Fixed - the issue has been resolved."
+else
+    MSG4="Result: Not fixed - additional work needed."
+fi
+
+# Helper to stream a message chunk
+stream_chunk() {
+    local text="$1"
+    local delta="$2"
+    local chunk=$(echo "$text" | sed 's/"/\\"/g')
+    echo "{\"type\":\"message\",\"role\":\"assistant\",\"content\":\"${chunk}\",\"delta\":${delta}}"
+}
+
+if [[ "$STREAMING" == "1" ]]; then
+    # Stream JSON format (mimics real Gemini --output-format stream-json)
+
+    # Init event
+    echo "{\"type\":\"init\",\"session_id\":\"mock-session\",\"model\":\"mock-model\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+
+    # Message 1
+    stream_chunk "$MSG1 " "true"
+    sleep 0.1
+    stream_chunk "$MSG2\n" "true"
+    sleep 0.1
+    
+    # Pause for inactivity test
+    if [[ "${MOCK_GEMINI_INACTIVITY_TEST:-0}" == "1" ]]; then
+        sleep 35
+    fi
+
+    stream_chunk "$MSG3\n" "true"
+    sleep 0.1
+    stream_chunk "$MSG4" "false"
+
+    # Final result
+    echo "{\"type\":\"result\",\"status\":\"success\",\"stats\":{\"total_tokens\":100,\"duration_ms\":1000},\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+else
+    # Non-streaming output
+    sleep "$DELAY"
+    echo -e "$MSG1\n$MSG2\n$MSG3\n$MSG4"
+fi
