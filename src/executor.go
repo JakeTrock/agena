@@ -79,23 +79,20 @@ func KillRunningProcess() {
 // The streamCb callback is invoked for each chunk of text received.
 // Returns the accumulated output (for rate limit detection) and any error.
 func RunGeminiCommand(geminiCmd, geminiFlags, prompt, workDir string, logWriter io.Writer, timeout time.Duration, streamCb StreamCallback) (string, error) {
-	// Build the command using heredoc to avoid shell escaping issues
-	// Using --output-format stream-json
-	const delimiter = "__AGENA_PROMPT_EOF__"
+	// Build command args - prompt is passed via stdin
 	jsonFlags := "--output-format stream-json"
 
 	var cmdStr string
 	if geminiFlags != "" {
-		cmdStr = fmt.Sprintf("%s %s %s --prompt <<'%s'\n%s\n%s",
-			geminiCmd, jsonFlags, geminiFlags, delimiter, prompt, delimiter)
+		cmdStr = fmt.Sprintf("%s %s %s -p ''", geminiCmd, jsonFlags, geminiFlags)
 	} else {
-		cmdStr = fmt.Sprintf("%s %s --prompt <<'%s'\n%s\n%s",
-			geminiCmd, jsonFlags, delimiter, prompt, delimiter)
+		cmdStr = fmt.Sprintf("%s %s -p ''", geminiCmd, jsonFlags)
 	}
 
-	// Log the exact command being executed (for debugging hangs)
+	// Log the command being executed (for debugging)
 	if logWriter != nil {
 		fmt.Fprintf(logWriter, "Command: %s\n", cmdStr)
+		fmt.Fprintf(logWriter, "Prompt:\n%s\n---\n", prompt)
 	}
 
 	args := []string{"-c", cmdStr}
@@ -105,6 +102,9 @@ func RunGeminiCommand(geminiCmd, geminiFlags, prompt, workDir string, logWriter 
 	// Put child in its own process group so it doesn't receive SIGQUIT.
 	// Linux additionally sets Pdeathsig via platform-specific helper.
 	cmd.SysProcAttr = geminiSysProcAttr()
+
+	// Pass prompt via stdin
+	cmd.Stdin = strings.NewReader(prompt)
 
 	// Create pipe for stdout so we can read line-by-line
 	stdoutPipe, err := cmd.StdoutPipe()
