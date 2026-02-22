@@ -37,12 +37,12 @@ func main() {
 	if *initFlag {
 		cwd, err := os.Getwd()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, ColorError(fmt.Sprintf("Error: failed to get working directory: %v", err)))
+			fmt.Fprintln(os.Stderr, ColorError(fmt.Sprintf("Error: %s", formatUserError(err))))
 			os.Exit(1)
 		}
 		created, err := InitializeAgena(cwd)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, ColorError(fmt.Sprintf("Error: failed to initialize agena/: %v", err)))
+			fmt.Fprintln(os.Stderr, ColorError(fmt.Sprintf("Error: %s", formatUserError(err))))
 			os.Exit(1)
 		}
 
@@ -67,7 +67,7 @@ func main() {
 	// Discover environment
 	env, err := DiscoverEnvironment()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, ColorError(fmt.Sprintf("Error: %v", err)))
+		fmt.Fprintln(os.Stderr, ColorError(fmt.Sprintf("Error: %s", formatUserError(err))))
 		os.Exit(1)
 	}
 
@@ -117,12 +117,12 @@ func main() {
 
 	runner, err := NewRunner(env, taskName, opts)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, ColorError(fmt.Sprintf("Error: %v", err)))
+		fmt.Fprintln(os.Stderr, ColorError(fmt.Sprintf("Error: %s", formatUserError(err))))
 		os.Exit(1)
 	}
 
 	if err := runner.Run(); err != nil {
-		fmt.Fprintln(os.Stderr, ColorError(fmt.Sprintf("Error: %v", err)))
+		fmt.Fprintln(os.Stderr, ColorError(fmt.Sprintf("Error: %s", formatUserError(err))))
 		os.Exit(1)
 	}
 }

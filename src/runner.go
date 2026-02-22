@@ -232,7 +232,7 @@ func (r *Runner) Run() error {
 
 		done, err := r.runIteration()
 		if err != nil {
-			fmt.Println(ColorError(fmt.Sprintf("Error: %v", err)))
+			fmt.Println(ColorError(fmt.Sprintf("Error: %s", formatUserError(err))))
 
 			// Check if it's a fatal error - stop immediately
 			if _, isFatal := err.(*fatalError); isFatal {

@@ -47,13 +47,17 @@ func DiscoverEnvironment() (*Environment, error) {
 		return nil, fmt.Errorf("failed to get working directory: %w", err)
 	}
 
-	// Look for agena/ directory first, fall back to task-runner/ for backwards compatibility
-	runnerDir := filepath.Join(cwd, "agena")
-	if _, err := os.Stat(runnerDir); os.IsNotExist(err) {
-		runnerDir = filepath.Join(cwd, "task-runner")
-		if _, err := os.Stat(runnerDir); os.IsNotExist(err) {
-			return nil, fmt.Errorf("no agena/ or task-runner/ directory found in %s\nRun `agena --init` to create a starter setup", cwd)
+	// Look for agena/ directory first, fall back to task-runner/ for backwards compatibility.
+	runnerDir, found, err := findRunnerDir(cwd)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		// Silently initialize a starter setup when no config directory exists.
+		if _, err := InitializeAgena(cwd); err != nil {
+			return nil, fmt.Errorf("failed to initialize agena directory: %w", err)
 		}
+		runnerDir = filepath.Join(cwd, "agena")
 	}
 
 	configPath := filepath.Join(runnerDir, "config.yaml")
@@ -85,6 +89,39 @@ func DiscoverEnvironment() (*Environment, error) {
 		RunnerDir:  runnerDir,
 		TaskID:     rand.Int63(),
 	}, nil
+}
+
+func findRunnerDir(cwd string) (runnerDir string, found bool, err error) {
+	agenaDir := filepath.Join(cwd, "agena")
+	isDir, statErr := pathIsDir(agenaDir)
+	if statErr != nil {
+		return "", false, fmt.Errorf("failed to inspect %s: %w", agenaDir, statErr)
+	}
+	if isDir {
+		return agenaDir, true, nil
+	}
+
+	taskRunnerDir := filepath.Join(cwd, "task-runner")
+	isDir, statErr = pathIsDir(taskRunnerDir)
+	if statErr != nil {
+		return "", false, fmt.Errorf("failed to inspect %s: %w", taskRunnerDir, statErr)
+	}
+	if isDir {
+		return taskRunnerDir, true, nil
+	}
+
+	return "", false, nil
+}
+
+func pathIsDir(path string) (bool, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return info.IsDir(), nil
 }
 
 func loadConfig(path string) (*Config, error) {

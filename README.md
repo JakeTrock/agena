@@ -105,6 +105,8 @@ agena mytask --task-timeout 5m      # Per-candidate timeout
 agena mytask --gemini-command "gemini"
 ```
 
+If `agena/` is missing, Agena now auto-creates a starter setup in the current directory.
+
 | Flag                | Description                                         |
 | ------------------- | --------------------------------------------------- |
 | `--list`            | List all available tasks                            |
