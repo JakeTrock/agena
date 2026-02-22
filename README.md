@@ -82,6 +82,9 @@ You can override the global `gemini_command` for a specific task by adding `gemi
 # List available tasks
 agena --list
 
+# Create starter agena/ scaffolding
+agena --init
+
 # Run a task
 agena mytask
 
@@ -109,6 +112,7 @@ agena mytask --gemini-command "gemini"
 | `--time-limit`      | Maximum duration for entire task run                |
 | `--task-timeout`    | Per-candidate timeout (overrides task.yaml)         |
 | `--gemini-command`  | Gemini command to use (overrides task.yaml)         |
+| `--init`            | Create starter `agena/` config and example task     |
 | `--dry-run`         | Print prompts without executing Gemini              |
 | `--verbose`         | Print full prompt content and show command overrides |
 | `--shard I/N`       | Shard index/total for parallel processing           |

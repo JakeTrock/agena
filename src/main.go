@@ -20,6 +20,7 @@ func main() {
 	dryRunFlag := flag.Bool("dry-run", false, "Print prompt without executing Gemini")
 	verboseFlag := flag.Bool("verbose", false, "Print verbose output")
 	shardFlag := flag.String("shard", "", "Shard index/total (e.g. 1/4 for first of 4 workers)")
+	initFlag := flag.Bool("init", false, "Create a starter agena/ directory in the current project")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: agena <task> [options]\n")
@@ -31,6 +32,37 @@ func main() {
 	// Reorder args so flags can appear after positional args
 	args := reorderArgs(os.Args[1:])
 	flag.CommandLine.Parse(args)
+
+	// Handle --init without requiring an existing agena/ directory.
+	if *initFlag {
+		cwd, err := os.Getwd()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, ColorError(fmt.Sprintf("Error: failed to get working directory: %v", err)))
+			os.Exit(1)
+		}
+		created, err := InitializeAgena(cwd)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, ColorError(fmt.Sprintf("Error: failed to initialize agena/: %v", err)))
+			os.Exit(1)
+		}
+
+		if len(created) == 0 {
+			fmt.Println(ColorInfo("agena/ is already initialized."))
+		} else {
+			fmt.Println(ColorSuccess("Created starter agena/ setup:"))
+			for _, path := range created {
+				fmt.Printf("  %s\n", path)
+			}
+		}
+
+		fmt.Println()
+		fmt.Println("Next steps:")
+		fmt.Println("  1. Edit agena/config.yaml for your project's commands")
+		fmt.Println("  2. Edit agena/example-task/task.yaml with a real candidate_source and prompt")
+		fmt.Println("  3. Run: agena --list")
+		fmt.Println("  4. Run: agena example-task")
+		return
+	}
 
 	// Discover environment
 	env, err := DiscoverEnvironment()

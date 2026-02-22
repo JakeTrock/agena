@@ -52,7 +52,7 @@ func DiscoverEnvironment() (*Environment, error) {
 	if _, err := os.Stat(runnerDir); os.IsNotExist(err) {
 		runnerDir = filepath.Join(cwd, "task-runner")
 		if _, err := os.Stat(runnerDir); os.IsNotExist(err) {
-			return nil, fmt.Errorf("no agena/ or task-runner/ directory found in current directory")
+			return nil, fmt.Errorf("no agena/ or task-runner/ directory found in %s\nRun `agena --init` to create a starter setup", cwd)
 		}
 	}
 
