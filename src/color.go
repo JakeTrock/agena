@@ -141,7 +141,7 @@ func StartupBanner(taskName, logPath, mode string) string {
 		"       /     \\",
 		"      /         ",
 		"     /           ",
-		"    /     .   ---\\",
+		"    /     .  ---\\",
 		"   /     / \\     \\",
 		"  /____ /   \\ ____\\",
 	}

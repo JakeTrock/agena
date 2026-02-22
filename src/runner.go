@@ -314,9 +314,14 @@ func (r *Runner) runIteration() (done bool, err error) {
 	if candidate == nil {
 		remaining := len(candidates) - ignoredCount
 		if remaining == 0 && ignoredCount > 0 {
-			fmt.Printf("No more candidates (%d ignored)\n", ignoredCount)
+			ignoredPath := filepath.Join(r.task.Dir, "ignored.log")
+			fmt.Println(ColorWarning("No candidates remaining."))
+			fmt.Printf("All %d candidate(s) have been previously processed and are in:\n", ignoredCount)
+			fmt.Printf("  %s\n\n", ColorInfo(ignoredPath))
+			fmt.Printf("To re-run these candidates, delete or clear this file:\n")
+			fmt.Printf("  %s\n", ColorDim("rm "+ignoredPath))
 		} else {
-			fmt.Println("No more candidates.")
+			fmt.Println("No candidates found.")
 		}
 		return true, nil
 	}
