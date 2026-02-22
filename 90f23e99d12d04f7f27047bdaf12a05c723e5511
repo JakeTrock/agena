@@ -1,0 +1,23 @@
+src/runner.go
+  750f2b2513e7d3b8 317-322,324
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "90f23e99d12d04f7f27047bdaf12a05c723e5511",
+  "prompts": {
+    "750f2b2513e7d3b8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "83977d52-a075-45e4-bd09-89082564f8cd",
+        "model": "claude-opus-4-5-20251101"
+      },
+      "human_author": "Jacob Trock <jgh@geocrypt.me>",
+      "messages": [],
+      "total_additions": 7,
+      "total_deletions": 2,
+      "accepted_lines": 7,
+      "overriden_lines": 0
+    }
+  }
+}
