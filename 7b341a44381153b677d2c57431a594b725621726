@@ -1,0 +1,42 @@
+src/init_test.go
+  50479a8a5e3089f0 1-52
+src/main.go
+  50479a8a5e3089f0 23,36-65
+src/init.go
+  50479a8a5e3089f0 1-61
+README.md
+  50479a8a5e3089f0 85-87,115
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "7b341a44381153b677d2c57431a594b725621726",
+  "prompts": {
+    "50479a8a5e3089f0": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1afc95bf-8a35-4f97-beab-3b3ebd51ce28",
+        "model": "claude-4.6-opus-high-thinking"
+      },
+      "human_author": "Jacob Trock <jgh@geocrypt.me>",
+      "messages": [],
+      "total_additions": 270,
+      "total_deletions": 13,
+      "accepted_lines": 264,
+      "overriden_lines": 1
+    },
+    "542542ae75d5e2a6": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "16e50799-b5ba-4ced-84ea-8c9aefab5537",
+        "model": "gpt-5.3-codex"
+      },
+      "human_author": "Jacob Trock <jgh@geocrypt.me>",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 1,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    }
+  }
+}
