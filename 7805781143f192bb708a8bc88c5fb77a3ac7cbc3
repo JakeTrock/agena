@@ -1,0 +1,29 @@
+README.md
+  327fe9714c157017 106-108,122
+src/runner.go
+  327fe9714c157017 99,650-653,666-670,696-700
+src/main.go
+  327fe9714c157017 21,113
+src/runner_test.go
+  327fe9714c157017 569-625
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "7805781143f192bb708a8bc88c5fb77a3ac7cbc3",
+  "prompts": {
+    "327fe9714c157017": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7bbc653f-9a90-472d-a2d1-3848796e654b",
+        "model": "gpt-5.3-codex"
+      },
+      "human_author": "Jacob Trock <jgh@geocrypt.me>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 78,
+      "overriden_lines": 0
+    }
+  }
+}
