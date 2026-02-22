@@ -1,4 +1,0 @@
-gemini_command: "gemini"
-verify_command: "echo 'set verify_command in agena/config.yaml'"
-success_command: "git commit -m 'Fix: $CANDIDATE'"
-reset_command: "git reset --hard"
