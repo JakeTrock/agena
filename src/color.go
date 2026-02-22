@@ -144,7 +144,6 @@ func StartupBanner(taskName, logPath, mode string) string {
 		"    /     .   ---\\",
 		"   /     / \\     \\",
 		"  /____ /   \\ ____\\",
-		"        '---'",
 	}
 
 	// Find the widest line

@@ -14,8 +14,20 @@ reset_command: "git reset --hard"
 
 const defaultTaskYAML = `candidate_source: "echo '[\"example-candidate\"]'"
 prompt: |
-  Replace this task with your real workflow.
+  Build a simple blog site.
   Candidate: $INPUT
+
+  Completion points:
+  1) Project setup is complete:
+     - Static site structure exists (home page + reusable layout/components)
+     - Content source for posts is defined (e.g., markdown or JSON)
+  2) Core blog functionality works:
+     - Home page lists posts with title, date, and short excerpt
+     - Individual post pages render full content correctly
+  3) UX polish and readiness:
+     - Basic styling is applied and responsive on mobile + desktop
+     - Navigation, metadata, and 404 page are present
+     - Build/run instructions are documented
 `
 
 // InitializeAgena creates a starter agena/ layout in cwd.
