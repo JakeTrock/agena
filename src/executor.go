@@ -80,7 +80,8 @@ func KillRunningProcess() {
 // Returns the accumulated output (for rate limit detection) and any error.
 func RunGeminiCommand(geminiCmd, geminiFlags, prompt, workDir string, logWriter io.Writer, timeout time.Duration, streamCb StreamCallback) (string, error) {
 	// Build command args - prompt is passed via stdin
-	jsonFlags := "--output-format stream-json"
+	// -y enables YOLO mode (auto-approve tool calls) required for headless execution
+	jsonFlags := "--output-format stream-json -y"
 
 	var cmdStr string
 	if geminiFlags != "" {
