@@ -1,0 +1,17 @@
+src/config.go
+  50479a8a5e3089f0 50-54,56-58,60,94-124
+README.md
+  50479a8a5e3089f0 108-109
+src/runner.go
+  50479a8a5e3089f0 235
+src/main.go
+  50479a8a5e3089f0 70,120,125
+src/errors.go
+  50479a8a5e3089f0 1-36,38,41-69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "0fe0b08f17dcb8b072a82538e9e24a8e73763636",
+  "prompts": {}
+}
