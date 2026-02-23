@@ -1,6 +1,10 @@
 # Agena Makefile
 
-.PHONY: build test clean smoke-test docker-build docker-test docker-smoke-test
+.PHONY: build test clean install smoke-test docker-build docker-test docker-smoke-test
+
+PREFIX ?= /usr/local
+BINDIR ?= $(PREFIX)/bin
+INSTALL ?= install
 
 # Local Build Commands
 build:
@@ -8,6 +12,10 @@ build:
 
 test:
 	go test -v ./src/...
+
+install: build
+	$(INSTALL) -d $(DESTDIR)$(BINDIR)
+	$(INSTALL) -m 755 bin/agena $(DESTDIR)$(BINDIR)/agena
 
 clean:
 	rm -rf bin/
