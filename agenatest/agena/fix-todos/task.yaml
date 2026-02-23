@@ -1,0 +1,19 @@
+candidate_source: |
+  # Find all TODO comments and output as JSON array
+  grep -n "# TODO:" utils.py 2>/dev/null | while read line; do
+    echo "$line"
+  done | jq -R -s 'split("\n") | map(select(length > 0))'
+
+prompt: |
+  Implement the TODO in utils.py.
+
+  The TODO to implement:
+  $INPUT
+
+  Instructions:
+  1. Read utils.py to understand the context
+  2. Implement the functionality described in the TODO comment
+  3. Remove the TODO comment after implementing
+  4. Make sure the code is syntactically correct
+
+  Important: Only implement THIS specific TODO, not others.

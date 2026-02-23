@@ -1,0 +1,4 @@
+gemini_command: "gemini"
+verify_command: "python3 -m py_compile utils.py"
+success_command: "echo 'Successfully implemented: $CANDIDATE'"
+reset_command: "echo 'Reset (no changes persisted)'"

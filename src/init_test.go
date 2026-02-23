@@ -13,15 +13,18 @@ func TestInitializeAgenaCreatesStarterFiles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("InitializeAgena() error = %v", err)
 	}
-	if len(created) != 2 {
-		t.Fatalf("expected 2 created files, got %d (%v)", len(created), created)
+	if len(created) != 3 {
+		t.Fatalf("expected 3 created files, got %d (%v)", len(created), created)
 	}
 
 	if _, err := os.Stat(filepath.Join(cwd, "agena", "config.yaml")); err != nil {
 		t.Fatalf("expected agena/config.yaml to exist: %v", err)
 	}
-	if _, err := os.Stat(filepath.Join(cwd, "agena", "example-task", "task.yaml")); err != nil {
-		t.Fatalf("expected agena/example-task/task.yaml to exist: %v", err)
+	if _, err := os.Stat(filepath.Join(cwd, "agena", "fix-todos", "task.yaml")); err != nil {
+		t.Fatalf("expected agena/fix-todos/task.yaml to exist: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(cwd, "utils.py")); err != nil {
+		t.Fatalf("expected utils.py to exist: %v", err)
 	}
 }
 

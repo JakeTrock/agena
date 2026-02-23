@@ -58,10 +58,10 @@ func main() {
 
 		fmt.Println()
 		fmt.Println("Next steps:")
-		fmt.Println("  1. Edit agena/config.yaml for your project's commands")
-		fmt.Println("  2. Edit agena/example-task/task.yaml with a real candidate_source and prompt")
-		fmt.Println("  3. Run: agena --list")
-		fmt.Println("  4. Run: agena example-task")
+		fmt.Println("  1. Review utils.py - it has TODO comments that agena will fix")
+		fmt.Println("  2. Run: agena --list              (see available tasks)")
+		fmt.Println("  3. Run: agena fix-todos --dry-run (preview the prompt)")
+		fmt.Println("  4. Run: agena fix-todos           (fix all TODOs iteratively)")
 		return
 	}
 
