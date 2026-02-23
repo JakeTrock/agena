@@ -1,0 +1,42 @@
+src/main.go
+  9918a6d131ebe872 61-64
+src/init.go
+  9918a6d131ebe872 10-12,15-20,22-24,27-66,73,82,93-99
+src/init_test.go
+  9918a6d131ebe872 16-17,23-27
+utils.py
+  fefe1b55d226d754 10-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "672b33b2f79bf1a8ca3cc4a6d76371265fc290bd",
+  "prompts": {
+    "9918a6d131ebe872": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8953a318-e80c-42bb-add2-86700d1d4461",
+        "model": "claude-opus-4-5-20251101"
+      },
+      "human_author": "Jacob Trock <jgh@geocrypt.me>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 72,
+      "overriden_lines": 0
+    },
+    "fefe1b55d226d754": {
+      "agent_id": {
+        "tool": "gemini",
+        "id": "37bd7678-f2ae-4637-ab3a-2176005ce395",
+        "model": "gemini-3-flash-preview"
+      },
+      "human_author": "Jacob Trock <jgh@geocrypt.me>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
